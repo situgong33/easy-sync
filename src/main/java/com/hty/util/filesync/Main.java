@@ -1,8 +1,6 @@
 package com.hty.util.filesync;
 
-import com.hty.util.filesync.handler.ModeDispatch;
-
-import java.io.File;
+import com.hty.util.filesync.client.FileSyncClient;
 
 /**
  * 程序启动类
@@ -13,8 +11,9 @@ public class Main {
 
 
     public static void main(String[] args) {
-
-        ModeDispatch.dispatch();
+        Runnable service = new FileSyncClient();
+        Thread t = new Thread(service);
+        t.start();
     }
 
 }

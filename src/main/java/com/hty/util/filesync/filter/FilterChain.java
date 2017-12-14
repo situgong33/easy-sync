@@ -22,7 +22,7 @@ public class FilterChain {
     }
 
 
-    public static File filter(File file) {
+    public static String filter(String file) {
         if(null != headFilter)
             return headFilter.filter(file);
         return file;

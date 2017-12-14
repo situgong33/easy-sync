@@ -5,7 +5,6 @@ import com.hty.util.filesync.filter.Filter;
 import com.hty.util.filesync.filter.FilterChain;
 import com.hty.util.filesync.filter.impl.ExcludeFilterImpl;
 import com.hty.util.filesync.filter.impl.IncludeFilterImpl;
-import com.hty.util.filesync.server.FileSyncServer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -72,91 +71,73 @@ public class AppConfig {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            for(Map.Entry<String, String> entry : instance.params.entrySet()) {
 
-                String key = "mode";
-                String value = instance.params.get(key);
+            String key = "buf_size";
+            String value = instance.params.get(key);
+            if("buf_size".equals(key)) {
+                try {
+                    int bufSize = Integer.valueOf(value);
+                    if(bufSize <= 0) {
+                        bufSize = 10240;
+                        instance.addProperty(key, ""+bufSize);
+                    }
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Value of property 'buf_size' must be a number!");
+                }
+            }
+
+            key = "overwrite";
+            value = instance.params.get(key);
+            if("overwrite".equals(key)) {
                 if(null == value ||
-                        (!"server".equals(value) && !"client".equals(value))) {
-                    throw new IllegalArgumentException("Value of property 'mode' must be 'server' or 'client'!");
-                }
-
-                key = "listen";
-                value = instance.params.get(key);
-                if(null == value || !value.matches("[0-9]+")) {
-                    throw new IllegalArgumentException("Value of property 'listen' must be a port number!");
+                        (!"true".equals(value) && !"false".equals(value))) {
+                    throw new IllegalArgumentException("Value of property 'overwrite' must be 'true' or 'false'!");
                 } else {
                     instance.addProperty(key, value);
                 }
+            }
 
-                key = "listen";
-                value = instance.params.get(key);
-                if(null == value || !value.matches("[0-9]+")) {
-                    throw new IllegalArgumentException("Value of property 'listen' must be a port number!");
+            key = "delete_after_sync";
+            value = instance.params.get(key);
+            if("delete_after_sync".equals(key)) {
+                if(null == value ||
+                        (!"true".equals(value) && !"false".equals(value))) {
+                    throw new IllegalArgumentException("Value of property 'delete_after_sync' must be 'true' or 'false'!");
                 } else {
                     instance.addProperty(key, value);
                 }
+            }
 
-                key = "buf_size";
-                value = instance.params.get(key);
-                if("buf_size".equals(key)) {
-                    try {
-                        int bufSize = Integer.valueOf(value);
-                        if(bufSize <= 0) {
-                            bufSize = 10240;
-                            instance.addProperty(key, ""+bufSize);
-                        }
-                    } catch (NumberFormatException e) {
-                        throw new IllegalArgumentException("Value of property 'buf_size' must be a number!");
-                    }
-                }
+            key = "src_dir";
+            value = instance.params.get(key);
+            if(StringUtil.isEmpty(value)) {
+                throw new IllegalArgumentException("Value of property '"+ key +"' must be a directory!");
+            } else {
+                instance.addProperty(key, value);
+            }
 
-                key = "overwrite";
-                value = instance.params.get(key);
-                if("overwrite".equals(key)) {
-                    if(null == value ||
-                            (!"true".equals(value) && !"false".equals(value))) {
-                        throw new IllegalArgumentException("Value of property 'overwrite' must be 'true' or 'false'!");
-                    } else {
-                        instance.addProperty(key, value);
-                    }
-                }
+            key = "dest_dir";
+            value = instance.params.get(key);
+            if(StringUtil.isEmpty(value)) {
+                throw new IllegalArgumentException("Value of property '"+ key +"' must be a directory!");
+            } else {
+                instance.addProperty(key, value);
+            }
 
-                key = "delete_after_sync";
-                value = instance.params.get(key);
-                if("delete_after_sync".equals(key)) {
-                    if(null == value ||
-                            (!"true".equals(value) && !"false".equals(value))) {
-                        throw new IllegalArgumentException("Value of property 'delete_after_sync' must be 'true' or 'false'!");
-                    } else {
-                        instance.addProperty(key, value);
-                    }
-                }
+            key = "host";
+            value = instance.params.get(key);
+            if(StringUtil.isEmpty(value)) {
+                throw new IllegalArgumentException("Value of property '"+ key +"' must be a valid host!");
+            } else {
+                instance.addProperty(key, value);
+            }
 
-                String mode = instance.params.get("mode");
-                if("server".equals(mode)) {
-                    key = "src_dir";
-                } else {
-                    key = "dest_dir";
-                }
-                value = instance.params.get(key);
-                if(StringUtil.isEmpty(value)) {
-                    throw new IllegalArgumentException("Value of property '"+ key +"' must be a directory!");
-                } else {
-                    instance.addProperty(key, value);
-                }
-
-                /////
-                if("client".equals(mode)) {
-                    key = "host";
-                    value = instance.params.get(key);
-                    if(StringUtil.isEmpty(value)) {
-                        throw new IllegalArgumentException("Value of property '"+ key +"' must be a valid host!");
-                    } else {
-                        instance.addProperty(key, value);
-                    }
-                }
-
+            key = "port";
+            value = instance.params.get(key);
+            if(StringUtil.isEmpty(value) || !StringUtil.trim(value).matches("[0-9]+")) {
+                logger.error("Value of property '"+ key +"' must be a number, set default 22");
+            } else {
+                instance.addProperty(key, value);
             }
 
          }

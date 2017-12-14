@@ -9,7 +9,7 @@ public interface Filter {
      * @param file
      * @return
      */
-    File filter(File file);
+    String filter(String file);
 
     /**
      * 添加过滤器

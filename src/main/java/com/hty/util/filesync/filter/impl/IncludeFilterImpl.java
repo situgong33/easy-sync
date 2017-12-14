@@ -19,8 +19,8 @@ public class IncludeFilterImpl  implements Filter {
     }
 
     @Override
-    public File filter(File file) {
-        if(null != file && file.getName().matches(pattern)) {
+    public String filter(String file) {
+        if(null != file && file.matches(pattern)) {
             if(null != followedFilter) {
                 return followedFilter.filter(file);
             } else {
