@@ -1,6 +1,7 @@
 package com.hty.util.filesync.client;
 
 import com.hty.util.filesync.bean.DownloadMonitor;
+import com.hty.util.filesync.exception.DownloadSlowException;
 import com.hty.util.filesync.filter.FilterChain;
 import com.hty.util.filesync.util.AppConfig;
 import com.hty.util.ftp.FTPConfig;
@@ -15,6 +16,13 @@ import java.util.Vector;
 public class FileSyncClient implements Runnable {
 
     private SFTPUtils util ;
+
+    private static DownloadSlowException slowException;
+
+    public static void setException() {
+        System.out.println("\nDownload will reset due to low speed.");
+        slowException = new DownloadSlowException();
+    }
     @Override
     public void run() {
 
@@ -50,9 +58,7 @@ public class FileSyncClient implements Runnable {
                 e.printStackTrace();
             }
         }
-        if(!util.cd(srcDir)) {
-            throw new IllegalStateException("无法改变到工作目录：" + srcDir);
-        }
+
 
         File destFolder = new File(destDir);
         if(!destFolder.exists()) {
@@ -63,10 +69,14 @@ public class FileSyncClient implements Runnable {
             try {
                 List<String> list = listFiles(srcDir, new ArrayList<String>(), "", true);
                 for (String s : list) {
-                    util.download(s, destDir + "/" + s, !overwrite, new DownloadMonitor(s));
+                    if(slowException != null) {
+                        throw slowException;
+                    }
+                    util.download(srcDir + "/" + s, destDir + "/" + s, !overwrite, new DownloadMonitor(s));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                slowException = null;
                 util.disconnect();
                 success = util.connect();
                 while(!success) {
@@ -77,9 +87,7 @@ public class FileSyncClient implements Runnable {
                         e1.printStackTrace();
                     }
                 }
-                if(!util.cd(srcDir)) {
-                    throw new IllegalStateException("无法改变到工作目录：" + srcDir);
-                }
+
             } finally {
                 try {
                     Thread.sleep(10000);

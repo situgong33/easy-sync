@@ -15,12 +15,17 @@ import java.util.*;
  * 系统配置类
  */
 public class AppConfig {
+
     private static final Log logger = LogFactory.getLog(AppConfig.class);
 
     /*参数*/
     private Map<String, String> params = new HashMap<String, String>();
     /*单实例*/
     private static AppConfig instance;
+    /** 任务重设的最大容忍次数 */
+    private int resetMaxCount;
+    /** 任务重设的最低容忍速度 */
+    private int resetMinSpeed;
 
     private AppConfig() {
     }
@@ -74,38 +79,32 @@ public class AppConfig {
 
             String key = "buf_size";
             String value = instance.params.get(key);
-            if("buf_size".equals(key)) {
-                try {
-                    int bufSize = Integer.valueOf(value);
-                    if(bufSize <= 0) {
-                        bufSize = 10240;
-                        instance.addProperty(key, ""+bufSize);
-                    }
-                } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("Value of property 'buf_size' must be a number!");
+            try {
+                int bufSize = Integer.valueOf(value);
+                if(bufSize <= 0) {
+                    bufSize = 10240;
+                    instance.addProperty(key, ""+bufSize);
                 }
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Value of property '"+ key +"' must be a number!");
             }
 
             key = "overwrite";
             value = instance.params.get(key);
-            if("overwrite".equals(key)) {
-                if(null == value ||
-                        (!"true".equals(value) && !"false".equals(value))) {
-                    throw new IllegalArgumentException("Value of property 'overwrite' must be 'true' or 'false'!");
-                } else {
-                    instance.addProperty(key, value);
-                }
+            if(null == value ||
+                    (!"true".equals(value) && !"false".equals(value))) {
+                throw new IllegalArgumentException("Value of property '"+ key +"' must be 'true' or 'false'!");
+            } else {
+                instance.addProperty(key, value);
             }
 
             key = "delete_after_sync";
             value = instance.params.get(key);
-            if("delete_after_sync".equals(key)) {
-                if(null == value ||
-                        (!"true".equals(value) && !"false".equals(value))) {
-                    throw new IllegalArgumentException("Value of property 'delete_after_sync' must be 'true' or 'false'!");
-                } else {
-                    instance.addProperty(key, value);
-                }
+            if(null == value ||
+                    (!"true".equals(value) && !"false".equals(value))) {
+                throw new IllegalArgumentException("Value of property '"+ key +"' must be 'true' or 'false'!");
+            } else {
+                instance.addProperty(key, value);
             }
 
             key = "src_dir";
@@ -140,6 +139,27 @@ public class AppConfig {
                 instance.addProperty(key, value);
             }
 
+
+            key = "reset_condition";
+            value = instance.params.get(key);
+            if(StringUtil.isEmpty(value) || !StringUtil.trim(value).matches("[0-9]+:[0-9]+")) {
+                instance.resetMaxCount = 0;
+                instance.resetMinSpeed = 0;
+                logger.info("set resetMaxCount = 0");
+                logger.info("set resetMinSpeed = 0");
+            } else {
+                try {
+                    instance.resetMaxCount = Integer.valueOf(value.split(":")[0]);
+                    instance.resetMinSpeed = Integer.valueOf(value.split(":")[1]);
+                    logger.info("set resetMaxCount = " + Integer.valueOf(value.split(":")[0]));
+                    logger.info("set resetMinSpeed = " + Integer.valueOf(value.split(":")[1]));
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+            }
+
+
+
          }
         return instance;
     }
@@ -154,4 +174,11 @@ public class AppConfig {
         return this.params.get(key);
     }
 
+    public int getResetMaxCount() {
+        return resetMaxCount;
+    }
+
+    public int getResetMinSpeed() {
+        return resetMinSpeed;
+    }
 }

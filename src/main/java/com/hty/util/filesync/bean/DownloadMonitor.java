@@ -1,5 +1,7 @@
 package com.hty.util.filesync.bean;
 
+import com.hty.util.filesync.client.FileSyncClient;
+import com.hty.util.filesync.util.AppConfig;
 import com.jcraft.jsch.SftpProgressMonitor;
 
 import java.text.DecimalFormat;
@@ -14,6 +16,8 @@ public class DownloadMonitor implements SftpProgressMonitor {
     private String fileName;
     private long firstTimestamp;
     private long lastTimestamp;
+    private int slowSpeedLastTimes = 0;
+    private AppConfig config ;
 
     public DownloadMonitor(String dest) {
         this.fileName = dest;
@@ -25,6 +29,7 @@ public class DownloadMonitor implements SftpProgressMonitor {
         lastTimestamp = System.currentTimeMillis();
         firstTimestamp = lastTimestamp;
         this.fileSize = max;
+        config = AppConfig.getInstance();
     }
 
     @Override
@@ -32,23 +37,37 @@ public class DownloadMonitor implements SftpProgressMonitor {
         downloadedBytes += l;
         lastDownloadBytes += l;
         long curTimestamp = System.currentTimeMillis();
-        if(curTimestamp - lastTimestamp >= 1000 || (downloadedBytes == fileSize)) {
+        if(curTimestamp - lastTimestamp >= 1000) {
             System.out.print("Total:" + fixLength(human_readable_filesize(fileSize), 9, " ") + "|" +
                     "Downloaded:" + fixLength(human_readable_filesize(downloadedBytes), 9, " ") + "|" +
                     "Speed["+ fixLength(human_readable_filesize((long) (lastDownloadBytes * 1000 * 1.0 / (curTimestamp - lastTimestamp))), 9, " ") +"/s]|" +
                     "AvgSpeed["+ fixLength(human_readable_filesize((long) (downloadedBytes * 1000 * 1.0 / (curTimestamp - firstTimestamp))), 9, " ") +"/s]|" +
-                    "Percent:" + printPercent() + (downloadedBytes == fileSize ? " - Done!\n" : "\r"));
+                    "Percent:" + printPercent() + "\r");
+            //速度连续10次小雨200k/s，则断开重连
+            if(lastDownloadBytes * 1000 / (curTimestamp - lastTimestamp) < config.getResetMinSpeed()) {
+                slowSpeedLastTimes++;
+                if(slowSpeedLastTimes  > config.getResetMaxCount()) {
+                    FileSyncClient.setException();
+                    return false;
+                }
+            } else {
+                slowSpeedLastTimes = 0;
+            }
             lastTimestamp = curTimestamp;
             lastDownloadBytes = 0;
         }
-        if(true)
-            throw new RuntimeException("Slow");
         return true;
     }
 
 
     @Override
     public void end() {
+        long curTimestamp = System.currentTimeMillis();
+        System.out.println("Total:" + fixLength(human_readable_filesize(fileSize), 9, " ") + "|" +
+                "Downloaded:" + fixLength(human_readable_filesize(downloadedBytes), 9, " ") + "|" +
+                "Speed["+ fixLength(human_readable_filesize((long) (lastDownloadBytes * 1000 * 1.0 / (curTimestamp - lastTimestamp))), 9, " ") +"/s]|" +
+                "AvgSpeed["+ fixLength(human_readable_filesize((long) (downloadedBytes * 1000 * 1.0 / (curTimestamp - firstTimestamp))), 9, " ") +"/s]|" +
+                "Percent:" + printPercent() + (downloadedBytes == fileSize ? " - Done!" : " - Failed!"));
     }
 
 
