@@ -33,8 +33,16 @@ public class FileSyncClient implements Runnable {
         String password = config.getProperty("ftp_password");
         String srcDir = fixRegularPath(config.getProperty("src_dir"));
         String destDir = fixRegularPath(config.getProperty("dest_dir"));
+        String delete_after_sync = config.getProperty("delete_after_sync");
+        String check_interval = config.getProperty("check_interval");
         String _overwrite = config.getProperty("overwrite");
         boolean overwrite = "true".equals(_overwrite);
+        boolean deleteAfterSync = "true".equals(delete_after_sync);
+        Integer checkInterval = 60;
+        try {
+            checkInterval = Integer.valueOf(check_interval);
+        } catch (NumberFormatException e) {
+        }
 
         FTPConfig ftpconfig = new FTPConfig();
         ftpconfig.setUser(username);
@@ -72,7 +80,13 @@ public class FileSyncClient implements Runnable {
                     if(slowException != null) {
                         throw slowException;
                     }
-                    util.download(srcDir + "/" + s, destDir + "/" + s, !overwrite, new DownloadMonitor(s));
+                    boolean downsuccess = util.download(srcDir + "/" + s, destDir + "/" + s, !overwrite, new DownloadMonitor(s));
+                    if(downsuccess && deleteAfterSync) {
+                        boolean delSuccess = util.rm(srcDir + "/" + s);
+                        if(!delSuccess) {
+                            System.out.println("Delete remote file filed: " + srcDir + "/" + s);
+                        }
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -90,7 +104,7 @@ public class FileSyncClient implements Runnable {
 
             } finally {
                 try {
-                    Thread.sleep(10000);
+                    Thread.sleep(checkInterval * 1000);
                 } catch (InterruptedException e) {
                 }
             }
