@@ -89,11 +89,21 @@ public class AppConfig {
                 throw new IllegalArgumentException("Value of property '"+ key +"' must be a number!");
             }
 
-            key = "overwrite";
+            key = "breakpoint_resume";
             value = instance.params.get(key);
             if(null == value ||
                     (!"true".equals(value) && !"false".equals(value))) {
                 throw new IllegalArgumentException("Value of property '"+ key +"' must be 'true' or 'false'!");
+            } else {
+                instance.addProperty(key, value);
+            }
+
+
+            key = "handle_exist_file";
+            value = instance.params.get(key);
+            if(null == value ||
+                    (!"overwrite".equals(value) && !"skip".equals(value) && !"update".equals(value))) {
+                throw new IllegalArgumentException("Value of property '"+ key +"' must be 'overwrite', 'skip' or 'update'!");
             } else {
                 instance.addProperty(key, value);
             }

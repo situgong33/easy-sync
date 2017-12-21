@@ -1,5 +1,6 @@
 package com.hty.util.filesync.client;
 
+import com.hty.util.filesync.BreakListener;
 import com.hty.util.filesync.bean.DownloadMonitor;
 import com.hty.util.filesync.exception.DownloadSlowException;
 import com.hty.util.filesync.filter.FilterChain;
@@ -13,18 +14,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-public class FileSyncClient implements Runnable {
+public class SFTPSyncClient implements Runnable, BreakListener {
 
     private SFTPUtils util ;
 
     private static DownloadSlowException slowException;
 
-    public static void setException() {
+    public void setException() {
         System.out.println("\nDownload will reset due to low speed.");
         slowException = new DownloadSlowException();
     }
     @Override
     public void run() {
+        System.out.println("Start in sftp mode.");
 
         AppConfig config = AppConfig.getInstance();
         String host = config.getProperty("host");
@@ -35,9 +37,10 @@ public class FileSyncClient implements Runnable {
         String destDir = fixRegularPath(config.getProperty("dest_dir"));
         String delete_after_sync = config.getProperty("delete_after_sync");
         String check_interval = config.getProperty("check_interval");
-        String _overwrite = config.getProperty("overwrite");
-        boolean overwrite = "true".equals(_overwrite);
+        String handle_exist_file = config.getProperty("handle_exist_file");
+        String _breakpoint_resume = config.getProperty("breakpoint_resume");
         boolean deleteAfterSync = "true".equals(delete_after_sync);
+        boolean breakpoint_resume = "true".equalsIgnoreCase(_breakpoint_resume);
         Integer checkInterval = 60;
         try {
             checkInterval = Integer.valueOf(check_interval);
@@ -80,7 +83,7 @@ public class FileSyncClient implements Runnable {
                     if(slowException != null) {
                         throw slowException;
                     }
-                    boolean downsuccess = util.download(srcDir + "/" + s, destDir + "/" + s, !overwrite, new DownloadMonitor(s));
+                    boolean downsuccess = util.download(srcDir + "/" + s, destDir + "/" + s, handle_exist_file, new DownloadMonitor(s, this), breakpoint_resume);
                     if(downsuccess && deleteAfterSync) {
                         boolean delSuccess = util.rm(srcDir + "/" + s);
                         if(!delSuccess) {

@@ -1,6 +1,7 @@
 package com.hty.util.filesync.bean;
 
-import com.hty.util.filesync.client.FileSyncClient;
+import com.hty.util.filesync.BreakListener;
+import com.hty.util.filesync.client.FTPSyncClient;
 import com.hty.util.filesync.util.AppConfig;
 import com.jcraft.jsch.SftpProgressMonitor;
 
@@ -18,9 +19,11 @@ public class DownloadMonitor implements SftpProgressMonitor {
     private long lastTimestamp;
     private int slowSpeedLastTimes = 0;
     private AppConfig config ;
+    private BreakListener listener;
 
-    public DownloadMonitor(String dest) {
+    public DownloadMonitor(String dest, BreakListener listener) {
         this.fileName = dest;
+        this.listener = listener;
     }
 
     @Override
@@ -47,7 +50,7 @@ public class DownloadMonitor implements SftpProgressMonitor {
             if(lastDownloadBytes * 1000 / (curTimestamp - lastTimestamp) < config.getResetMinSpeed()) {
                 slowSpeedLastTimes++;
                 if(slowSpeedLastTimes  > config.getResetMaxCount()) {
-                    FileSyncClient.setException();
+                    listener.setException();
                     return false;
                 }
             } else {
