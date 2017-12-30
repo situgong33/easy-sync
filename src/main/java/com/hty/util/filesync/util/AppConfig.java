@@ -5,8 +5,8 @@ import com.hty.util.filesync.filter.Filter;
 import com.hty.util.filesync.filter.FilterChain;
 import com.hty.util.filesync.filter.impl.ExcludeFilterImpl;
 import com.hty.util.filesync.filter.impl.IncludeFilterImpl;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
@@ -16,7 +16,7 @@ import java.util.*;
  */
 public class AppConfig {
 
-    private static final Log logger = LogFactory.getLog(AppConfig.class);
+    private static final Logger logger = LoggerFactory.getLogger(AppConfig.class);
 
     /*参数*/
     private Map<String, String> params = new HashMap<String, String>();
@@ -32,7 +32,6 @@ public class AppConfig {
 
     /**
      * 获得单实例
-     * @return
      */
     public static synchronized AppConfig getInstance () {
         if(null == instance) {
@@ -53,7 +52,7 @@ public class AppConfig {
                             throw new IllegalArgumentException("Value of property '"+ key +"' must be a directory!");
                         } else {
                             if(null != value) {
-                                logger.info("Exclude Filter: " + value);
+                                logger.info("Exclude Filter: {}", value);
                                 Filter filter = new ExcludeFilterImpl(key, value);
                                 FilterChain.addFilter(filter);
                             }
@@ -65,7 +64,7 @@ public class AppConfig {
                             throw new IllegalArgumentException("Value of property '"+ key +"' must be a directory!");
                         } else {
                             if(null != value) {
-                                logger.info("Include Filter: " + value);
+                                logger.info("Include Filter: {}", value);
                                 Filter filter = new IncludeFilterImpl(key, value);
                                 FilterChain.addFilter(filter);
                             }
@@ -144,7 +143,7 @@ public class AppConfig {
             key = "port";
             value = instance.params.get(key);
             if(StringUtil.isEmpty(value) || !StringUtil.trim(value).matches("[0-9]+")) {
-                logger.error("Value of property '"+ key +"' must be a number, set default 22");
+                logger.error("Value of property '{}' must be a number, set default 22", key);
             } else {
                 instance.addProperty(key, value);
             }
@@ -161,8 +160,8 @@ public class AppConfig {
                 try {
                     instance.resetMaxCount = Integer.valueOf(value.split(":")[0]);
                     instance.resetMinSpeed = Integer.valueOf(value.split(":")[1]);
-                    logger.info("set resetMaxCount = " + Integer.valueOf(value.split(":")[0]));
-                    logger.info("set resetMinSpeed = " + Integer.valueOf(value.split(":")[1]));
+                    logger.info("set resetMaxCount = {}", Integer.valueOf(value.split(":")[0]));
+                    logger.info("set resetMinSpeed = {}", Integer.valueOf(value.split(":")[1]));
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }

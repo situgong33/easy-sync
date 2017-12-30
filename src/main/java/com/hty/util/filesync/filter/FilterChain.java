@@ -1,9 +1,5 @@
 package com.hty.util.filesync.filter;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
 public class FilterChain {
 
     private static Filter headFilter;
