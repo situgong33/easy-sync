@@ -111,11 +111,12 @@
 	
   </dependencies>
 
+    <!-- 由于网站迁移到了cloudflare上，只能通过根域名访问80和443端口，所以修改为子域名 -->
     <distributionManagement>
         <repository>
             <id>releases</id>
             <name>Releases</name>
-            <url>http://foxless.com:8081/nexus/content/repositories/releases</url>
+            <url>http://service.foxless.com:8081/nexus/content/repositories/releases</url>
         </repository>
     </distributionManagement>
 </project>
